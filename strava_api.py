@@ -3,6 +3,7 @@ import selenium
 import time
 from selenium import webdriver
 from selenium.webdriver.support.ui import Select
+from selenium.common.exceptions import NoSuchElementException
 
 class Food:
     def __init__(self, name, info, alergens, selectable, selected):
@@ -16,6 +17,16 @@ class Launch:
     def __init__(self, date, foods):
         self.date = date
         self.foods = foods
+
+class User:
+    def __init__(self, name, id, vsymbol, room, last_update, launches, overpayment):
+        self.name = name 
+        self.id = id
+        self.vsymbol = vsymbol
+        self.room = room
+        self.last_update = last_update
+        self.launches = launches
+        self.overpayment = overpayment
 
 def init():
     global __BROWSER__
@@ -71,7 +82,7 @@ def login(room, id, password):
         __LOGGEDIN__ = True
         return True
 
-def getInfo():
+def get_info():
     global __LOGGEDIN__
     if __LOGGEDIN__ == False:
         return false
@@ -95,9 +106,33 @@ def getInfo():
         foods = []
 
         for option_element in option_elements:
+            # Vars
+            selectable = False
+            selected = False
+            alergens = ""
+
+            selectable_element = option_element.find_element_by_class_name("objednavka-jidlo-zmena")
+            if selectable_element.get_attribute("class") == "objednavka-jidlo-zmena":
+                selectable = True
+                checkbox_element = selectable_element.find_element_by_class_name("zaskrtavaciPolicko")
+                hidden_input_element = checkbox_element.find_element_by_tag_name("input")
+                if hidden_input_element.get_attribute("value") == "zaskrtnuto":
+                    selected = True
+
             name_element = option_element.find_element_by_class_name("objednavka-jidlo-popis")
             info_element = option_element.find_element_by_class_name("objednavka-jidlo-nazev")
-            food = Food(name_element.text, info_element.text, "", False, False)
+
+            #FIXME: alergens
+            #try:
+            #    #print(True)
+            #    option_element.find_element_by_class_name("objednavka-jidlo-alergeny-udaje")
+            #except NoSuchElementException:
+            #    print(False)
+            #alergens = alergen_element.text
+            #except:
+            #    alergens = ""
+            #print(alergen_element.html)
+            food = Food(name_element.text, info_element.text, alergens, selectable, selected)
             foods.append(food)
         launch = Launch(date, foods)
         
