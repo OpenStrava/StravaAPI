@@ -21,14 +21,13 @@ class Launch:
         self.foods = foods
 
 class User:
-    def __init__(self, name, id, vsymbol, room, last_update, launches, overpayment):
-        self.name = name 
+    def __init__(self, name, id, vsymbol, room, last_update, account):
+        self.name = name
         self.id = id
         self.vsymbol = vsymbol
         self.room = room
         self.last_update = last_update
-        self.launches = launches
-        self.overpayment = overpayment
+        self.account = account
 
 def init():
     global __BROWSER__
@@ -84,7 +83,8 @@ def login(room, id, password):
         __LOGGEDIN__ = True
         return True
 
-def get_info():
+#TODO: Cast to correct types
+def get_food_info():
     global __LOGGEDIN__
     if __LOGGEDIN__ == False:
         return False
@@ -93,15 +93,16 @@ def get_info():
     __BROWSER__.implicitly_wait(0)
     time.sleep(2)
 
-    buffer = []
+    launches = []
 
-    # Get elements
+    # GET ELEMENTS
+    # Get days
     food_cover_element = __BROWSER__.find_element_by_id("seznam_objednavek_obalka")
     day_elements = food_cover_element.find_elements_by_class_name("objednavka-obalka-jednotne")
-
+    
     # Iterate over all days
     for day_element in day_elements:
-        # Get elements
+        # Get elements 
         date = day_element.find_element_by_class_name("objednavka-den-datum").text
         options_cover_element = day_element.find_element_by_class_name("objednavka-jidla-obalka")
         option_elements = options_cover_element.find_elements_by_class_name("objednavka-jidlo-obalka")
@@ -127,7 +128,7 @@ def get_info():
             dropdown_element = option_element.find_element_by_class_name("rozbaleni-dolu")
             if dropdown_element.get_attribute("style") != "visibility: hidden;":
                 detail_element = option_element.find_element_by_class_name("objednavka-jidlo-detail-konecObjednavani")
-                cost_element = option_element.find_element_by_class_name("objednavka-jidlo-detail-cena")
+                cost_element = option_element.find_element_by_class_name("objednavka-jidlo-detail-cena") 
 
                 detail = detail_element.get_attribute("innerHTML")
                 cost = cost_element.get_attribute("innerHTML")
@@ -146,5 +147,93 @@ def get_info():
             foods.append(food)
         launch = Launch(date, foods)
         
-        buffer.append(launch)
-    return buffer
+        launches.append(launch)
+    return launches
+
+def get_user_info():
+    global __LOGGEDIN__
+    if __LOGGEDIN__ == False:
+        return False
+
+    __BROWSER__.get("https://www.strava.cz/Strava/Stravnik/Objednavky")
+    __BROWSER__.implicitly_wait(0)
+    time.sleep(2)
+
+    # Get cover user info
+    information_dialog_element = __BROWSER__.find_element_by_id("informacni-dialog")
+    id_cover_element = information_dialog_element.find_element_by_class_name("prihlasovaci-jmeno")
+    name_cover_element = information_dialog_element.find_element_by_class_name("jmeno-uzivatele")
+    vsymbol_cover_element = information_dialog_element.find_element_by_class_name("variabilni-symbol")    
+    room_cover_element = information_dialog_element.find_element_by_class_name("zarizeni")
+    last_update_cover_element = information_dialog_element.find_element_by_class_name("datum-aktualizace")  
+    user_account_cover_element = __BROWSER__.find_element_by_class_name("informacniLista-konto")  
+    # Get user info
+    user_id = id_cover_element.find_element_by_class_name("hodnota").get_attribute("innerHTML")
+    user_name = name_cover_element.find_element_by_class_name("hodnota").get_attribute("innerHTML")
+    user_vsymbol = vsymbol_cover_element.find_element_by_class_name("hodnota").get_attribute("innerHTML")
+    user_room = room_cover_element.find_element_by_class_name("hodnota").get_attribute("innerHTML")
+    user_last_update = last_update_cover_element.find_element_by_class_name("hodnota").get_attribute("innerHTML")
+    user_account = user_account_cover_element.find_element_by_class_name("konto").get_attribute("innerHTML")
+    
+    user = User(user_name, user_id, user_vsymbol, user_room, user_last_update, user_account)
+    return user
+
+def set_food(id, food_id):
+    global __LOGGEDIN__
+    if __LOGGEDIN__ == False:
+        return False
+
+    __BROWSER__.get("https://www.strava.cz/Strava/Stravnik/Objednavky")
+    __BROWSER__.implicitly_wait(0)
+    time.sleep(2)
+
+    # Get elements
+    submit = __BROWSER__.find_element_by_class_name("objednavky-ulozit")
+
+    # Get days
+    food_cover_element = __BROWSER__.find_element_by_id("seznam_objednavek_obalka")
+    day_elements = food_cover_element.find_elements_by_class_name("objednavka-obalka-jednotne")
+
+    selected_element = day_elements[id]
+
+    options_cover_element = selected_element.find_element_by_class_name("objednavka-jidla-obalka")
+    option_elements = options_cover_element.find_elements_by_class_name("objednavka-jidlo-obalka")
+
+    # Select food
+    option_elements[food_id].click()
+
+    time.sleep(1)
+
+    # Submit
+    submit.click()
+
+def set_foods(array):
+    global __LOGGEDIN__
+    if __LOGGEDIN__ == False:
+        return False
+    
+    __BROWSER__.get("https://www.strava.cz/Strava/Stravnik/Objednavky")
+    __BROWSER__.implicitly_wait(0)
+    time.sleep(2)
+
+    # Get elements
+    submit = __BROWSER__.find_element_by_class_name("objednavky-ulozit")
+
+    # Get days
+    food_cover_element = __BROWSER__.find_element_by_id("seznam_objednavek_obalka")
+    day_elements = food_cover_element.find_elements_by_class_name("objednavka-obalka-jednotne")
+
+    for variable in array:
+        selected_element = day_elements[variable[0]]
+        options_cover_element = selected_element.find_element_by_class_name("objednavka-jidla-obalka")
+        option_elements = options_cover_element.find_elements_by_class_name("objednavka-jidlo-obalka")
+
+        # Select food
+        option_elements[variable[1]].click()
+    
+    time.sleep(1)
+
+    # Submit
+    submit.click()
+
+
