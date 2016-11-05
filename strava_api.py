@@ -29,6 +29,13 @@ class User:
         self.last_update = last_update
         self.account = account
 
+class Room:
+    def __init__(self, name, adress, contact, econtact):
+        self.name = name
+        self.adress = adress
+        self.contact = contact
+        self.econtack = econtact
+
 def init():
     global __BROWSER__
     global __LOGGEDIN__
@@ -179,7 +186,21 @@ def get_user_info():
     return user
 
 def get_room_info():
-    pass
+    global __LOGGEDIN__
+    if __LOGGEDIN__ == False:
+        return False
+
+    __BROWSER__.get("https://www.strava.cz/Strava/Stravnik/Uvod")
+    __BROWSER__.implicitly_wait(0)
+    time.sleep(2)
+
+    information_cover = __BROWSER__.find_element_by_class_name("jidelnaDetaily-udaje")
+    name = information_cover.find_element_by_class_name("jidelnaDetaily-nazev").text
+    adress = information_cover.find_element_by_class_name("jidelnaDetaily-adresa").text
+    contact = information_cover.find_element_by_class_name("jidelnaDetaily-kontakt").text
+    econtact = information_cover.find_element_by_class_name("jidelnaDetaily-elektronickyKontakt").text
+    
+    return Room(name, adress, contact, econtact)
 
 def get_food_history():
     pass
