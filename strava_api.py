@@ -34,7 +34,7 @@ class Room:
         self.name = name
         self.adress = adress
         self.contact = contact
-        self.econtack = econtact
+        self.econtact = econtact
 
 def init():
     global __BROWSER__
