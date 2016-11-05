@@ -178,6 +178,18 @@ def get_user_info():
     user = User(user_name, user_id, user_vsymbol, user_room, user_last_update, user_account)
     return user
 
+def get_room_info():
+    pass
+
+def get_food_history():
+    pass
+
+def get_payments():
+    pass
+
+def get_messages():
+    pass
+
 def set_food(id, food_id):
     global __LOGGEDIN__
     if __LOGGEDIN__ == False:
@@ -235,5 +247,4 @@ def set_foods(array):
 
     # Submit
     submit.click()
-
 
