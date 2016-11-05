@@ -6,10 +6,12 @@ from selenium.webdriver.support.ui import Select
 from selenium.common.exceptions import NoSuchElementException
 
 class Food:
-    def __init__(self, name, info, alergens, selectable, selected):
+    def __init__(self, name, info, alergens, detail, cost, selectable, selected):
         self.name = name
         self.info = info
         self.alergens = alergens
+        self.detail = detail
+        self.cost = cost
         self.selectable = selectable
         self.selected = selected
 
@@ -31,7 +33,7 @@ class User:
 def init():
     global __BROWSER__
     global __LOGGEDIN__
-    __BROWSER__ = webdriver.Firefox()
+    __BROWSER__ = webdriver.PhantomJS()
     __LOGGEDIN__ = False
 
 def logout():
@@ -85,10 +87,11 @@ def login(room, id, password):
 def get_info():
     global __LOGGEDIN__
     if __LOGGEDIN__ == False:
-        return false
+        return False
 
     __BROWSER__.get("https://www.strava.cz/Strava/Stravnik/Objednavky")
-    __BROWSER__.implicitly_wait(2000)
+    __BROWSER__.implicitly_wait(0)
+    time.sleep(2)
 
     buffer = []
 
@@ -109,7 +112,9 @@ def get_info():
             # Vars
             selectable = False
             selected = False
-            alergens = ""
+            alergens = None
+            cost = None
+            detail = None
 
             selectable_element = option_element.find_element_by_class_name("objednavka-jidlo-zmena")
             if selectable_element.get_attribute("class") == "objednavka-jidlo-zmena":
@@ -118,21 +123,26 @@ def get_info():
                 hidden_input_element = checkbox_element.find_element_by_tag_name("input")
                 if hidden_input_element.get_attribute("value") == "zaskrtnuto":
                     selected = True
+            
+            dropdown_element = option_element.find_element_by_class_name("rozbaleni-dolu")
+            if dropdown_element.get_attribute("style") != "visibility: hidden;":
+                detail_element = option_element.find_element_by_class_name("objednavka-jidlo-detail-konecObjednavani")
+                cost_element = option_element.find_element_by_class_name("objednavka-jidlo-detail-cena")
+
+                detail = detail_element.get_attribute("innerHTML")
+                cost = cost_element.get_attribute("innerHTML")
 
             name_element = option_element.find_element_by_class_name("objednavka-jidlo-popis")
             info_element = option_element.find_element_by_class_name("objednavka-jidlo-nazev")
 
-            #FIXME: alergens
-            #try:
-            #    #print(True)
-            #    option_element.find_element_by_class_name("objednavka-jidlo-alergeny-udaje")
-            #except NoSuchElementException:
-            #    print(False)
-            #alergens = alergen_element.text
-            #except:
-            #    alergens = ""
-            #print(alergen_element.html)
-            food = Food(name_element.text, info_element.text, alergens, selectable, selected)
+            #TODO: Parse alergens html to text
+            try:
+                alergen_element = option_element.find_element_by_class_name("objednavka-jidlo-alergeny-udaje")
+                alergens = alergen_element.get_attribute("innerHTML")
+            except NoSuchElementException:
+                pass
+            
+            food = Food(name_element.text, info_element.text, alergens, detail, cost, selectable, selected)
             foods.append(food)
         launch = Launch(date, foods)
         
